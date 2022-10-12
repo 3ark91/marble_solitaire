@@ -6,6 +6,8 @@ Date - 11/10/2022
 import copy
 
 import numpy as np
+from MS_Node import MS_Node
+from tkinter import *
 
 # 0 invalid, 1 marble, 2 empty
 start_state = [[0, 0, 1, 1, 1, 0, 0],
@@ -98,40 +100,54 @@ def make_move(state, start, eliminated, finish):
     return next_state
 
 
+def display_and_exit(solution_node):
+    solution_sequence = []
+
+    print(f"found solution")
+    traverse_state = solution_node
+
+    while traverse_state.get_parent():
+        traverse_state.print_state()
+        solution_sequence.append(traverse_state.get_last_move())
+        traverse_state = traverse_state.get_parent()
+
+
+    solution_sequence.reverse()
+    for step in solution_sequence:
+        print(step)
+    exit()
+
+
+def build_tree(node):
+
+    if node.get_num_marbles() == 1:
+        solution_node = node
+        display_and_exit(solution_node)
+
+    if len(node.get_moves()) == 0:
+        return
+
+    for move in node.get_moves():
+        start, eliminated, finish = move[0], move[1], move[2]
+        new_state = make_move(node.get_state(), start, eliminated, finish)
+        new_node = MS_Node(new_state)
+        new_node.set_parent(node)
+        new_node.set_last_move(move)
+        node.add_child(new_node)
+        build_tree(new_node)
+
+
+
 def main():
 
-    queue = []
-    visited = []
-
-    possible_moves = {}
-
-    queue.append(np.array(start_state))
-
-    while queue:
-        state = queue.pop()
-        visited.append(np.array(state))
-
-        moves = get_valid_moves(state)
-
-        # if len(moves) == 0:
-        #     print("deadend")
-        #     print_state(state)
-
-        for move in moves:
-            start, eliminated, finish = move[0], move[1], move[2]
-            new_state = np.array(make_move(state, start, eliminated, finish))
-            queue.append(new_state)
+    root = MS_Node(start_state)
 
 
-            if count_marbles(new_state) == 1:
-                print("found the solution")
-                print("final state")
-                print_state(new_state)
-                quit()
+    build_tree(root)
+    print("Tree built")
 
-        if len(visited) % 10000 == 0:
-            print(f'{len(visited)}: {len(moves)} possible moves, {count_marbles(state)} marbles remain')
-            print_state(state)
+
+
 
 
 
